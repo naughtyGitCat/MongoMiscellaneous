@@ -101,6 +101,10 @@ def mod_conf(disk, mongo_version, port):
         raise Exception
 
 # 启动实例
-def start_instant(bin_prefix,conf):
-    cmd = '{}/mongod -f '
+def start_instant(bin_prefix, conf):
+    cmd = '{}/mongod -f {}'.format(bin_prefix, conf)
     status, output =subprocess.getstatusoutput(cmd)
+    if status != 0:
+        p('启动实例失败')
+        p(output)
+

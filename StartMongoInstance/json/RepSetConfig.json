@@ -1,0 +1,60 @@
+{
+    "_id" : "shard_A_3000X",
+    "version" : NumberInt(3),
+    "protocolVersion" : NumberLong(1),
+    "members" : [
+        {
+            "_id" : NumberInt(0),
+            "host" : "10.110.41.203:30000",
+            "arbiterOnly" : false,
+            "buildIndexes" : true,
+            "hidden" : false,
+            "priority" : 1.0,
+            "tags" : {
+
+            },
+            "slaveDelay" : NumberLong(0),
+            "votes" : NumberInt(1)
+        },
+        {
+            "_id" : NumberInt(1),
+            "host" : "10.110.41.203:30001",
+            "arbiterOnly" : false,
+            "buildIndexes" : true,
+            "hidden" : false,
+            "priority" : 1.0,
+            "tags" : {
+
+            },
+            "slaveDelay" : NumberLong(0),
+            "votes" : NumberInt(1)
+        },
+        {
+            "_id" : NumberInt(2),
+            "host" : "10.110.41.203:30002",
+            "arbiterOnly" : true,
+            "buildIndexes" : true,
+            "hidden" : false,
+            "priority" : 1.0,
+            "tags" : {
+
+            },
+            "slaveDelay" : NumberLong(0),
+            "votes" : NumberInt(1)
+        }
+    ],
+    "settings" : {
+        "chainingAllowed" : true,
+        "heartbeatIntervalMillis" : NumberInt(2000),
+        "heartbeatTimeoutSecs" : NumberInt(10),
+        "electionTimeoutMillis" : NumberInt(10000),
+        "getLastErrorModes" : {
+
+        },
+        "getLastErrorDefaults" : {
+            "w" : NumberInt(1),
+            "wtimeout" : NumberInt(0)
+        },
+        "replicaSetId" : ObjectId("5aeafc68984fa9640956c758")
+    }
+}

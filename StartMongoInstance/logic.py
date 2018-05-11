@@ -1,110 +1,124 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 import sys
 import time
 import getopt
 import re
 import os
 import yaml
-import subprocess
-#全局参数
+import commands as subprocess
+import pymongo
+from functions import bin_prefix,make_dir,generate_keyfile,mod_conf,p,pre_check,write_keyfile
+from functions import  start_instant,check_alive,regist_instance_to_replset,Mongo,create_root_user
 
-
-#TODO: yaml回写配置的时候，写入了缩写的形式，虽可以正常使用，但是看起来麻烦，其他功能都OK后，再处理这个
-
-# ip:port#disk/buffer#role#priority
-#192.168.1.151:30000#3/20#primary#90
-
-# 读取参数
+prefix = ''
 def read_args():
-    opts,args = getopt.getopt(sys.argv[1:],'i:')
-    print('opts:',opts)
+    #c configServer
+    #s mongos
+    #ar regist instance to repSet
+    #as add shard
+    global prefix
+    opts,args = getopt.getopt(sys.argv[1:],'i:r:c:s:ar:as:')
     for opt,value in opts:
-        print('opt:', opt)
-        ip = re.split(':|#|/', value)[0]
-        port = re.split(':|#|/', value)[1]
-        disk = re.split(':|#|/', value)[2]
-        buffer = re.split(':|#|/', value)[3]
-        role = re.split(':|#|/', value)[4]
-        priority = re.split(':|#|/', value)[5]
-    print('ip+port:', ip, ':', port, '\ndisk:', disk, '\nbuffer:', buffer,'GB', '\nrole:', role, '\npriority:', priority )
-    return ip, port, disk, buffer, role, priority
+        # i instance
+        if opt == '-i':
+            print('opt:', opt)
+            ip = re.split(':|#|/', value)[0]
+            port = re.split(':|#|/', value)[1]
+            disk = re.split(':|#|/', value)[2]
+            buffer = re.split(':|#|/', value)[3]
+            prefix = 'mongod'
+            return ip,port,disk,buffer,prefix
+        elif opt == '-r':
+            # r repset
+            # 192.168.1.151:30000#3/20#primary#repsetname#priority
+            ip = re.split(':|#|/', value)[0]
+            port = re.split(':|#|/', value)[1]
+            disk = re.split(':|#|/', value)[2]
+            buffer = re.split(':|#|/', value)[3]
+            role = re.split(':|#|/', value)[4]
+            replsetname = re.split(':|#|/', value)[5]
+            priority = re.split(':|#|/', value)[6]
+            prefix = 'shard'
+            return ip,port,disk,buffer,role,replsetname,priority,prefix
+        elif opt == '-ar':
+            # 注册节点到复制集中
+            # 192.168.1.151:30000#192.168.1.152#50#arbiterOnly-->|true|false注意大小写
+            primaryIP = re.split(':|#|/', value)[0]
+            port = re.split(':|#|/', value)[1]
+            otherIP = re.split(':|#|/', value)[2]
+            priority = re.split(':|#|/', value)[3]
+            arbiterOnly = re.split(':|#|/', value)[4]
+            prefix = 'add repset'
+            return primaryIP,port,otherIP,priority, arbiterOnly, prefix
+        elif opt == '-c':
+            #192.168.1.151:30000#3/20#primary#90#repsetname
+            ip = re.split(':|#|/', value)[0]
+            port = re.split(':|#|/', value)[1]
+            disk = re.split(':|#|/', value)[2]
+            buffer = re.split(':|#|/', value)[3]
+            role = re.split(':|#|/', value)[4]
+            replsetname = re.split(':|#|/', value)[5]
+            prefix = 'configSvr'
+            return ip, port, disk, buffer, role, replsetname, prefix
+        elif opt == '-s':
+            # 192.168.1.151:30000/ConfigSvrIP1/ConfigSvrIP2/ConfigSvrIP3/ConfigSvrPort
+            ip = re.split(':|#|/', value)[0]
+            port = re.split(':|#|/', value)[1]
+            disk = 1
+            ConfigSvrIP1 = re.split(':|#|/', value)[2]
+            ConfigSvrIP2 = re.split(':|#|/', value)[3]
+            ConfigSvrIP3 = re.split(':|#|/', value)[4]
+            ConfigSvrPort = re.split(':|#|/', value)[5]
+            prefix = 'mongos'
+
+keystring ='''8raIkk38J1t8M3Ae+LqX0jLTnDmy5ypkDcdvdDo01wHYNNyz9w2ceZZ9sVk4EhvC\
+              9TItdE5R4aMg0ISQv+G3PK9Xm+eWX25tptjoPNcXR/h085XR2MAfmhgyXwoPeapI\
+              yuphWPC1zjteaYVbSwq8edPMm1As9mdPVrClBfNvRXldjW/luC4++Bks+QRiA9kZ\
+              dG14IKHEos2ewFz14jq1yehx8lK3PIFUCXwKzjcDjB27VrObLYhAbBlOJIhOQ551\
+              HcwG0js6m48o+Mt+j5FRb7JJ0tdUdNybdozMYmSl2AdVTd9WZxBTbZT0r7FhdaAj\
+              QUlqZKowuVv6Q3X7TyNFu49n9eW7ZhQT7zgga1IFVkgilwU4YNRmAzGwyb9fnigt\
+              8elkoAKAAX5daJomNIlZUQfI2tSlEHQMz7wQNXgM8+xNNp8kHG1DtmygRdy6t4Fp\
+              a6DE8gCJ348vR9Ekv9Octd/NOiqHNe7tr+y00pOzNBmjtr62kqaZr8mk/2kaHseX\
+              Up7ZqrizV/plWZxVEx/+fA=='''
+mongo_version = 36
 read_args()
+try:
+    if prefix == 'shard':
+        ip, port, disk, buffer, role, replsetname, priority, prefix = read_args()
+        p.debug(prefix)
+        p.info('get opts finished')
+        # whether port and path been used
+        # pre_check(port,disk,mongo_version,prefix)
+        # p.info('pre check finished')
+        # make base path,data path,log_path and return,different shard role use different prefix
+        # base_path, data_path, log_file = make_dir(disk, mongo_version, port,prefix)
+        # write down the keystring in basepath
+        # write_keyfile(base_path,keystring)
+        # generate conf file using a single instant conf. according to different prefix add some shard/repSet option
+        # conf_file = mod_conf(disk, mongo_version, port, replsetName=replsetname,role=role,prefix=prefix)
+        # start instant with -f option
+        # bin_prefix = bin_prefix(36)
+        # start_instant(bin_prefix, conf_file)
+        # check alive by netstat -ntulp|grep mongod > find(port)
+        check_alive(port)
+        if role == 'primary':
+            print('127.0.0.1',port)
+            p.debug('now opreate inside mongo')
+            instance = Mongo('127.0.0.1', port)
+            p.debug('now go to  init_rs')
+            instance.init_rs(ip,replsetname,priority)
+            create_root_user(port,user_name='root',password='sa123456')
+    if prefix == 'add repset':
+        try:
+            primaryIP, port, otherIP, priority, arbiterOnly, prefix = read_args()
+            regist_instance_to_replset(primaryIP,port,otherIP,priority,arbiterOnly,root_user='root',root_password='sa123456')
+        except Exception:
+            p.error('regist_instance_to_replset failed')
+    else:
+        p.info('It has been add to TODO list')
+except Exception:
+    p.error('error,stopped')
 
-# 带日期打印
-def p(a):
-    now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-    now = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-    print(now, ' ', a)
-
-# 询问安装单实例的版本：默认/home/dba/dba-tool/tool/mongodb-3.6/bin/mongod
-def get_version(mongo_version):
-    try:
-        input_value = input('please choose you mongod version,type 2 for 3.2,other for 3.6')
-        if input_value == 2:
-            p(u'U have choose 3.2 version,\nlocate in /home/dba/dba-tool/tool/mongodb-3.2/bin/mongod')
-            mongo_version = 32
-        elif input_value == 1:
-            p(u'U have choose 3.6 version,\nlocate in /home/dba/dba-tool/tool/mongodb-3.6/bin/mongod')
-            mongo_version = 36
-    except Exception:
-        p('U don`t type in ,We suppose it well be 3.6')
-        mongo_version = 36
-    return mongo_version
-
-# 根据返回的版本，给出目录前缀
-def bin_prefix(mongo_version):
-    if mongo_version == 32:
-        bin_prefix='/home/dba/dba-tool/tool/mongodb-3.2/bin/'
-    if mongo_version == 36:
-        bin_prefix='/home/dba/dba-tool/tool/mongodb-3.6/bin/'
-    return bin_prefix
-
-# 创建文件夹
-def mkdir(disk,mongo_version,port):
-    base_path = '/data{}/mongodb_{}_port_{}'.format(disk, mongo_version, port)
-    data_path = '{}/data'.format(base_path)
-    log_file = '{}/log/mongodb_{}_port_{}.log'.format(base_path, mongo_version, port)
-    try:
-        os.makedirs(base_path, exist_ok=False)
-        os.makedirs(data_path, exist_ok=False)
-        os.makedirs(log_file, exist_ok=False)
-    except Exception:
-        p('创建目录失败，请检测是否已有同名目录')
-
-# 配置文件生成
-def mod_conf(disk, mongo_version, port):
-    try:
-        base_path = '/data{}/mongodb_{}_port_{}'.format(disk, mongo_version, port)
-        data_path = '{}/data'.format(base_path)
-        log_file = '{}/log/mongodb_{}_port_{}.log'.format(base_path, mongo_version, port)
-        pid_file= '{}/mongodb_{}_port_{}.pid'
-        # 读取原本的单实例配置文件，并修改相关变量，在数据的根目录下写入新的配置文件，mongod_version_port.conf
-        with open('mongod_20001.conf', 'rt') as mongo_conf_file:
-            tmp = mongo_conf_file.read()
-        mongo_conf = yaml.load(tmp)
-        new_conf = '{}/mongodb_{}_port_{}'.format(base_path, mongo_version, port)
-
-        with open(new_conf, 'wt') as mongo_conf_file:
-            mongo_conf['net']['port'] = port
-            mongo_conf['processManagement']['pidFilePath'] = pid_file
-            mongo_conf['systemLog']['path'] = log_file
-            mongo_conf['storage']['dbPath'] = data_path
-            mongo_conf['storage']['wiredTiger']['engineConfig']['cacheSizeGB'] = 1
-            # yaml回写的时候会把off自动改写成false，这里需要手工指定
-            mongo_conf['operationProfiling']['mode'] = 'off'
-            yaml.dump(mongo_conf, mongo_conf_file)
-        return new_conf
-    except Exception:
-        p('配置文件写入失败，请检查')
-        raise Exception
-
-# 启动实例
-def start_instant(bin_prefix, conf):
-    cmd = '{}/mongod -f {}'.format(bin_prefix, conf)
-    status, output =subprocess.getstatusoutput(cmd)
-    if status != 0:
-        p('启动实例失败')
-        p(output)
 

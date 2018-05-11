@@ -1,0 +1,10 @@
+{
+  "user":"root",
+  "pwd":"sa123456",
+  "role":[
+    {
+      "role":"root",
+      "db":"admin"
+    }
+  ]
+}

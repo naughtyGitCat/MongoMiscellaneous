@@ -6,16 +6,53 @@ import time
 import getopt
 import re
 import yaml
-with open('mongod_20001.conf','rt') as mongo_conf_file:
-    tmp = mongo_conf_file.read()
-    print(tmp)
-mongo_conf = yaml.load(tmp)
-with open('mongod_20001.conf','wt') as mongo_conf_file:
-    mongo_conf['net']['port'] = 20001
-    mongo_conf['processManagement']['pidFilePath'] = '/home/dba/sysbench-data/mongo/20001/20001.pid'
-    mongo_conf['systemLog']['path'] = '/home/dba/sysbench-data/mongo/20001/log/20001.log'
-    mongo_conf['storage']['dbPath'] = '/home/dba/sysbench-data/mongo/20001/data'
-    mongo_conf['storage']['wiredTiger']['engineConfig']['cacheSizeGB'] = 1
-    # yaml回写的时候会把off自动改写成false，这里需要手工指定
-    mongo_conf['operationProfiling']['mode'] = 'off'
-    yaml.dump(mongo_conf,mongo_conf_file)
+import json
+import pymongo
+from pprint import pprint
+from Logger import Logger
+from bson.json_util import loads,dumps
+log = Logger('all.log',level='debug')
+p = log.logger
+from functions import Mongo
+# config = dumps(config)
+# print(config)
+# 连接本机Mongo
+# class Mongo:
+#
+#     def __init__(self,  host, port,username=None, password=None, authSource=None):
+#         p.debug('class init begins')
+#         self.host = host
+#         self.port = port
+#         self.username = username
+#         self.password = password
+#         p.debug(self.password)
+#         if username is None and password is None:
+#             p.debug('username is None and password is None')
+#             self.client = pymongo.MongoClient(host, port, authMechanism='SCRAM-SHA-1')
+#         elif authSource is None:
+#             p.debug('authSource is None')
+#             self.client = pymongo.MongoClient(host, port, username=username, password=password, authSource=admin,
+#                                               authMechanism='SCRAM-SHA-1')
+#         else:
+#             self.client = pymongo.MongoClient(host, port, username=username, password=password, authSource=authSource,
+#                                               authMechanism='SCRAM-SHA-1')
+#         p.debug('class init ok')
+#     # 放最后操作
+#     def init_rs(self,TrueIP,replsetname,priority):
+#         self.client.admin.command('replSetInitiate',"{_id:'{}',members:[{host:'{}:{}',priority:{}}]}".format(replsetname,TrueIP,port,priority))
+
+
+#
+# host = '127.0.0.1'
+port = 30000
+# username = 'root'
+# password = 'sa123456'
+#
+# instance = Mongo(host,port,username,password,authSource='admin')
+
+p.debug('now opreate inside mongo')
+instance = Mongo('127.0.0.1', port)
+# instance.init_rs(ip,replsetname,priority)
+# create_root_user(port,user_name='root',password='sa123456')
+# instance.add_repset_member()
+

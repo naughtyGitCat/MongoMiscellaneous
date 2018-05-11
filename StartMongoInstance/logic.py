@@ -11,7 +11,7 @@ import commands as subprocess
 import pymongo
 from functions import bin_prefix,make_dir,generate_keyfile,mod_conf,p,pre_check,write_keyfile
 from functions import  start_instant,check_alive,regist_instance_to_replset,Mongo,create_root_user
-
+# TODO:复制集开放的IP问题
 prefix = ''
 def read_args():
     #c configServer

@@ -184,8 +184,12 @@ def intitate_repset(IP1,priority1,IP2,priority2,IP3,priority3):
 
 # 为实例创建一个admin库鉴权的root角色用户，用户名为root,密码为sa123456
 def create_root_user(port, user_name, password):
+    port=int(port)
+    p.debug('now in create_root_user')
     client = pymongo.MongoClient('127.0.0.1',port)
+    p.debug('client connected')
     db = client.admin
+    p.debug('database chose')
     db.command("createUser", "{}".format(user_name), pwd="{}".format(str(password)), roles=["root"])
 
 
@@ -207,7 +211,7 @@ class Mongo:
             self.client = pymongo.MongoClient(host, port, authMechanism='SCRAM-SHA-1')
         elif authSource is None:
             p.debug('authSource is None')
-            self.client = pymongo.MongoClient(host, port, username=username, password=password, authSource=admin,
+            self.client = pymongo.MongoClient(host, port, username=username, password=password, authSource='admin',
                                               authMechanism='SCRAM-SHA-1')
         else:
             self.client = pymongo.MongoClient(host, port, username=username, password=password, authSource=authSource,
@@ -215,9 +219,21 @@ class Mongo:
         p.debug('class init ok')
     # 放最后操作,拼接有问题，暂时不用
     def init_rs(self,TrueIP,replsetname,priority):
+        priority=int(priority)
+        p.debug(priority)
+        print(type(priority),type(TrueIP),type(self.port),type(replsetname))
+        p.debug(TrueIP)
+        p.debug(replsetname)
+        p.debug(self.port)
         p.debug('start init rs')
-        p.debug({'_id':'{}'.format(replsetname),'members':[{'host':'{}:{}'.format(TrueIP,port),'priority':'{}'.format(priority)}]})
-        self.client.admin.command('replSetInitiate',"{_id:'{}',members:[{host:'{}:{}',priority:{}}]}".format(replsetname,TrueIP,port,priority))
+        init_config = {'_id':'{}'.format(replsetname),'members':[{'_id':0,'host':'{}:{}'.format(TrueIP,self.port),'priority':priority}]}
+        p.debug(init_config)
+        try:
+            responese = self.client.admin.command("replSetInitiate",init_config)
+            p.info('Init finished')
+        except Exception:
+            print(responese)
+            p.error('Init repset on primary failed')
 
 def init_rs(host,port,ip,replsetname,priority):
     mongo_cmd = 'rs.initiate({host:{},priority:{},{})'.format(secondaryIP,priority,arbiterOnly)

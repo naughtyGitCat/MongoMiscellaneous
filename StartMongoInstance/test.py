@@ -43,15 +43,29 @@ from functions import Mongo
 
 
 #
-# host = '127.0.0.1'
-port = 30000
+host = '127.0.0.1'
+ip =host
+port = 20001
 # username = 'root'
 # password = 'sa123456'
-#
+replsetname='20180511'
+priority = 90
 # instance = Mongo(host,port,username,password,authSource='admin')
 
+
+zreplsetname ='sss'
+TrueIP = '127.0.0.1'
+zport = '30000'
+zpriority = '90'
+
+a= {'_id':'{}'.format(zreplsetname),'members':[{'host':'{}:{}'.format(TrueIP,zport),'priority':'{}'.format(zpriority)}]}
+
 p.debug('now opreate inside mongo')
-instance = Mongo('127.0.0.1', port)
+instance = Mongo('127.0.0.1', port,username='root',password='sa123456')
+response=instance.client.admin.command('replSetInitiate',a)
+print(response)
+# instance.init_rs(ip,replsetname,priority)
+
 # instance.init_rs(ip,replsetname,priority)
 # create_root_user(port,user_name='root',password='sa123456')
 # instance.add_repset_member()

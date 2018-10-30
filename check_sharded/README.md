@@ -2,7 +2,13 @@
 检查集群中哪些库没有启用分片 \
 检查集群中启用分片库中的哪些集合没有分片
 
-## 思路
+
+## 使用方式
+```bash
+vim config.py # 修改Mongos的连接信息
+python3 check_sharded.py
+```
+## 实现思路
 ```javascript
 // 连接到mongos
 // 切换到config库

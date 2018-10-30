@@ -1,4 +1,4 @@
-#!/home/dba/python3/bin/python
+#!/bin/python3
 # encoding=utf-8
 
 
@@ -15,11 +15,11 @@
 # 禁止from xx import *
 __all__ = []
 
-
+# Mongos的连接信息
 class ConnString(object):
     ip = "5.20.13.14"
     port = 5201
-    auth_enabled=True
+    auth_enabled=True  # 是否开启了验证
     user = 'me'
     password = 'fate'
 

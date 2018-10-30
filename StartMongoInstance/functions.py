@@ -182,7 +182,7 @@ def intitate_repset(IP1,priority1,IP2,priority2,IP3,priority3):
     dict = {"IP1": "priority1", "IP2": "priority2", "IP3": "priority3"}
     dict = {"{}".format(IP1): "{}", "{}": "{}", "{}": "{}"}
 
-# 为实例创建一个admin库鉴权的root角色用户，用户名为root,密码为sa123456
+# 为实例创建一个admin库鉴权的root角色用户，用户名为root,密码为5201314
 def create_root_user(port, user_name, password):
     port=int(port)
     p.debug('now in create_root_user')
